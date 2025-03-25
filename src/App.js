@@ -11,7 +11,7 @@ function App() {
   const [itemForm, setItemForm] = useState({ item: '', quantity: '', reserved: '' });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [loadingInventory, setLoadingInventory] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const API_BASE = "https://inventory-system-2-rhm0.onrender.com";
 
@@ -24,45 +24,42 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    setMessage('');
     try {
-      console.log("Attempting login with", email);
       const res = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      console.log("Login response:", data);
       if (!res.ok) throw new Error(data.detail || "Login failed");
       setToken(data.token);
       setUser(email);
       setLocation(data.location);
     } catch (err) {
-      setError(err.message);
+      setError("Login failed: " + err.message);
     }
   };
 
   const fetchInventory = async () => {
-    setLoadingInventory(true);
+    setLoading(true);
+    setError('');
     try {
-      console.log("Fetching inventory from", `${API_BASE}/inventory`);
       const res = await fetch(`${API_BASE}/inventory`);
       const text = await res.text();
       console.log("Raw inventory response:", text);
       const data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error("Expected inventory array");
+      if (!Array.isArray(data)) throw new Error("Invalid inventory format");
       setInventory(data);
     } catch (err) {
-      console.error("Inventory fetch failed:", err);
-      setError("Failed to load inventory: " + err.message);
+      setError("Load failed: " + err.message);
     } finally {
-      setLoadingInventory(false);
+      setLoading(false);
     }
   };
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const res = await fetch(`${API_BASE}/inventory`, {
         method: 'POST',
@@ -79,13 +76,13 @@ function App() {
       setItemForm({ item: '', quantity: '', reserved: '' });
       fetchInventory();
     } catch (err) {
-      setError(err.message);
+      setError("Add item failed: " + err.message);
     }
   };
 
   const handleLogout = () => {
-    setUser(null);
     setToken('');
+    setUser(null);
     setLocation('');
     setInventory([]);
   };
@@ -119,36 +116,39 @@ function App() {
           <section className="add-inventory">
             <h2>Add New Item</h2>
             <form onSubmit={handleAddItem}>
-              <input type="text" placeholder="Item" value={itemForm.item} onChange={(e) => setItemForm({ ...itemForm, item: e.target.value })} required />
-              <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required />
-              <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={(e) => setItemForm({ ...itemForm, reserved: e.target.value })} />
+              <input type="text" placeholder="Item" value={itemForm.item} onChange={e => setItemForm({ ...itemForm, item: e.target.value })} required />
+              <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={e => setItemForm({ ...itemForm, quantity: e.target.value })} required />
+              <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={e => setItemForm({ ...itemForm, reserved: e.target.value })} />
               <button type="submit">Add Item</button>
             </form>
           </section>
 
           <section className="inventory-list">
             <h2>Inventory</h2>
-            {loadingInventory && <p>Loading inventory...</p>}
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Item</th>
-                  <th>Quantity</th>
-                  <th>Reserved</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventory.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.id}</td>
-                    <td>{item.item}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.reserved}</td>
+            {loading ? (
+              <p>Loading inventory...</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Reserved</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {inventory.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.id}</td>
+                      <td>{item.item}</td>
+                      <td>{item.quantity}</td>
+                      <td>{item.reserved}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </section>
         </>
       )}
