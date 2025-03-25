@@ -30,12 +30,15 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
+      const text = await res.text();
+      console.log("Raw login response:", text);
+      const data = JSON.parse(text);
       if (!res.ok) throw new Error(data.detail || "Login failed");
       setToken(data.token);
       setUser(email);
       setLocation(data.location);
     } catch (err) {
+      console.error("Login error:", err);
       setError("Login failed: " + err.message);
     }
   };
@@ -51,6 +54,7 @@ function App() {
       if (!Array.isArray(data)) throw new Error("Invalid inventory format");
       setInventory(data);
     } catch (err) {
+      console.error("Inventory fetch failed:", err);
       setError("Load failed: " + err.message);
     } finally {
       setLoading(false);
@@ -116,9 +120,9 @@ function App() {
           <section className="add-inventory">
             <h2>Add New Item</h2>
             <form onSubmit={handleAddItem}>
-              <input type="text" placeholder="Item" value={itemForm.item} onChange={e => setItemForm({ ...itemForm, item: e.target.value })} required />
-              <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={e => setItemForm({ ...itemForm, quantity: e.target.value })} required />
-              <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={e => setItemForm({ ...itemForm, reserved: e.target.value })} />
+              <input type="text" placeholder="Item" value={itemForm.item} onChange={(e) => setItemForm({ ...itemForm, item: e.target.value })} required />
+              <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required />
+              <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={(e) => setItemForm({ ...itemForm, reserved: e.target.value })} />
               <button type="submit">Add Item</button>
             </form>
           </section>
