@@ -43,10 +43,14 @@ function App() {
   const fetchInventory = async () => {
     try {
       const res = await fetch(`${API_BASE}/inventory`);
-      const data = await res.json();
+      const text = await res.text();
+      console.log("Raw response:", text);
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error("Expected array response");
       setInventory(data);
     } catch (err) {
-      setError("Failed to load inventory");
+      console.error("Inventory Load Error:", err);
+      setError("Failed to load inventory: " + err.message);
     }
   };
 
