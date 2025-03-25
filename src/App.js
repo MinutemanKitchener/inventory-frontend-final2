@@ -8,7 +8,7 @@ function App() {
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
   const [inventory, setInventory] = useState([]);
-  const [itemForm, setItemForm] = useState({ item: '', quantity_on_hand: '', reserved: '' });
+  const [itemForm, setItemForm] = useState({ item: '', quantity: '', reserved: '' });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
@@ -31,9 +31,7 @@ function App() {
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || "Login failed");
-      }
+      if (!res.ok) throw new Error(data.detail || "Login failed");
       setToken(data.token);
       setUser(email);
       setLocation(data.location);
@@ -60,14 +58,14 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           item: itemForm.item,
-          quantity_on_hand: Number(itemForm.quantity_on_hand),
+          quantity: Number(itemForm.quantity),
           reserved: Number(itemForm.reserved || 0)
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Add failed");
       setMessage("Item added");
-      setItemForm({ item: '', quantity_on_hand: '', reserved: '' });
+      setItemForm({ item: '', quantity: '', reserved: '' });
       fetchInventory();
     } catch (err) {
       setError(err.message);
@@ -111,7 +109,7 @@ function App() {
             <h2>Add New Item</h2>
             <form onSubmit={handleAddItem}>
               <input type="text" placeholder="Item" value={itemForm.item} onChange={(e) => setItemForm({ ...itemForm, item: e.target.value })} required />
-              <input type="number" placeholder="Quantity on Hand" value={itemForm.quantity_on_hand} onChange={(e) => setItemForm({ ...itemForm, quantity_on_hand: e.target.value })} required />
+              <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required />
               <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={(e) => setItemForm({ ...itemForm, reserved: e.target.value })} />
               <button type="submit">Add Item</button>
             </form>
@@ -133,8 +131,8 @@ function App() {
                   <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{item.item}</td>
-                    <td>{item.quantity_on_hand}</td>
-                    <td>{item.quantity_reserved}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.reserved}</td>
                   </tr>
                 ))}
               </tbody>
