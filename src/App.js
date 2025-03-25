@@ -12,6 +12,7 @@ function App() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rawLoginOutput, setRawLoginOutput] = useState('');
 
   const API_BASE = "https://inventory-system-2-rhm0.onrender.com";
 
@@ -31,14 +32,13 @@ function App() {
         body: JSON.stringify({ email, password })
       });
       const text = await res.text();
-      console.log("Raw login response:", text);
+      setRawLoginOutput(text);
       const data = JSON.parse(text);
       if (!res.ok) throw new Error(data.detail || "Login failed");
       setToken(data.token);
       setUser(email);
       setLocation(data.location);
     } catch (err) {
-      console.error("Login error:", err);
       setError("Login failed: " + err.message);
     }
   };
@@ -49,12 +49,10 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/inventory`);
       const text = await res.text();
-      console.log("Raw inventory response:", text);
       const data = JSON.parse(text);
       if (!Array.isArray(data)) throw new Error("Invalid inventory format");
       setInventory(data);
     } catch (err) {
-      console.error("Inventory fetch failed:", err);
       setError("Load failed: " + err.message);
     } finally {
       setLoading(false);
@@ -106,6 +104,12 @@ function App() {
             <button type="submit">Login</button>
           </form>
           {error && <p style={{ color: 'red' }}>{error}</p>}
+          {rawLoginOutput && (
+            <div style={{ marginTop: '1em', background: '#eee', padding: '10px' }}>
+              <strong>Raw Login Response:</strong>
+              <pre>{rawLoginOutput}</pre>
+            </div>
+          )}
         </section>
       ) : (
         <>
