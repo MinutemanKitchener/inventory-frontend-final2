@@ -6,6 +6,7 @@ function App() {
   const [auditLog, setAuditLog] = useState([]);
   const [loanForm, setLoanForm] = useState({ item_id: '', quantity: '', to_location: '' });
   const [returnForm, setReturnForm] = useState({ item_id: '', quantity: '', from_location: '' });
+  const [newItemForm, setNewItemForm] = useState({ item: '', quantity: '', reserved: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const API_BASE = "https://inventory-system-2-rhm0.onrender.com";
@@ -59,6 +60,24 @@ function App() {
         if (data.detail) throw new Error(data.detail);
         setMessage('Return successful');
         setReturnForm({ item_id: '', quantity: '', from_location: '' });
+        fetchInventory();
+        fetchAuditLog();
+      })
+      .catch(err => setError(err.message));
+  };
+
+  const handleAddItemSubmit = (e) => {
+    e.preventDefault();
+    fetch(`${API_BASE}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...newItemForm, quantity: Number(newItemForm.quantity), reserved: Number(newItemForm.reserved || 0) })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.detail) throw new Error(data.detail);
+        setMessage('Item added');
+        setNewItemForm({ item: '', quantity: '', reserved: '' });
         fetchInventory();
         fetchAuditLog();
       })
@@ -128,12 +147,22 @@ function App() {
           </form>
         </section>
 
+        <section className="add-inventory">
+          <h2>Add New Inventory Item</h2>
+          <form onSubmit={handleAddItemSubmit}>
+            <input type="text" placeholder="Item Name" value={newItemForm.item} onChange={(e) => setNewItemForm({ ...newItemForm, item: e.target.value })} required />
+            <input type="number" placeholder="Quantity" value={newItemForm.quantity} onChange={(e) => setNewItemForm({ ...newItemForm, quantity: e.target.value })} required />
+            <input type="number" placeholder="Reserved" value={newItemForm.reserved} onChange={(e) => setNewItemForm({ ...newItemForm, reserved: e.target.value })} />
+            <button type="submit">Add Item</button>
+          </form>
+        </section>
+
         <section className="audit-log">
           <h2>Audit Log</h2>
           <ul>
             {auditLog.map((log, index) => (
               <li key={index}>
-                [{log.timestamp}] {log.action.toUpperCase()} — {log.quantity} of "{log.item}" {log.action === 'loan' ? `to ${log.to}` : `from ${log.from}`}
+                [{log.timestamp}] {log.action.toUpperCase()} — {log.quantity} of "{log.item}" {log.action === 'loan' ? `to ${log.to}` : log.action === 'return' ? `from ${log.from}` : ''}
               </li>
             ))}
           </ul>
