@@ -6,7 +6,7 @@ function App() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = "https://your-backend-url.onrender.com"; // replace with your backend URL
+  const API_BASE = "https://inventory-system-3.onrender.com";
 
   useEffect(() => {
     fetchInventory();
