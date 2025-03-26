@@ -3,7 +3,8 @@ import './App.css';
 
 function App() {
   const [inventory, setInventory] = useState([]);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ location: 'Kitchener' });
+  const [activeTab, setActiveTab] = useState('Kitchener');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +15,7 @@ function App() {
     "product_type", "brand", "paper_finish", "paper_weight",
     "colour", "size", "quantity_on_hand", "reserved_customer",
     "reserved_job", "quantity_available", "loaned_to",
-    "borrowed_from", "notes"
+    "borrowed_from", "notes", "location"
   ];
 
   const productTypeOptions = [
@@ -63,7 +64,7 @@ function App() {
       });
       const result = await res.json();
       if (res.ok) {
-        setFormData({});
+        setFormData({ location: activeTab });
         fetchInventory();
       } else {
         setError(result.error || "Submission failed.");
@@ -73,6 +74,8 @@ function App() {
     }
   };
 
+  const filteredInventory = inventory.filter(item => item.location === activeTab);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -80,9 +83,37 @@ function App() {
         <p>Inventory Management System</p>
       </header>
 
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        {["Kitchener", "Cambridge"].map(loc => (
+          <button
+            key={loc}
+            onClick={() => {
+              setActiveTab(loc);
+              setFormData(prev => ({ ...prev, location: loc }));
+            }}
+            style={{
+              padding: '10px 20px',
+              margin: '0 10px',
+              fontWeight: activeTab === loc ? 'bold' : 'normal',
+              background: activeTab === loc ? '#007bff' : '#ccc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px'
+            }}
+          >
+            {loc}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <h2>Add Inventory Item</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '10px',
+          marginBottom: '10px'
+        }}>
           {columns.map((key) => {
             if (key === "product_type") {
               return (
@@ -104,6 +135,26 @@ function App() {
                 </select>
               );
             }
+            if (key === "location") {
+              return (
+                <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
+                  <option value="">Select location</option>
+                  <option value="Kitchener">Kitchener</option>
+                  <option value="Cambridge">Cambridge</option>
+                </select>
+              );
+            }
+            if (key === "date_of_purchase") {
+              return (
+                <input
+                  key={key}
+                  type="date"
+                  name={key}
+                  value={formData[key] || ""}
+                  onChange={handleChange}
+                />
+              );
+            }
             return (
               <input
                 key={key}
@@ -111,7 +162,6 @@ function App() {
                 placeholder={key}
                 value={formData[key] || ""}
                 onChange={handleChange}
-                style={{ flex: '1 1 200px', padding: '5px' }}
               />
             );
           })}
@@ -131,8 +181,8 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {inventory.length > 0 ? (
-            inventory.map((item, index) => (
+          {filteredInventory.length > 0 ? (
+            filteredInventory.map((item, index) => (
               <tr key={index}>
                 {columns.map((col, i) => (
                   <td key={i}>{item[col] || ""}</td>
@@ -142,7 +192,7 @@ function App() {
           ) : (
             <tr>
               <td colSpan={columns.length} style={{ textAlign: 'center' }}>
-                No inventory records found.
+                No inventory records for {activeTab}.
               </td>
             </tr>
           )}
