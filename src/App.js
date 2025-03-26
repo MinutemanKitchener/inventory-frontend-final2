@@ -87,7 +87,7 @@ function App() {
             if (key === "product_type") {
               return (
                 <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
-                  <option value="">Select {key}</option>
+                  <option value="">Select product type</option>
                   {productTypeOptions.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
@@ -97,7 +97,7 @@ function App() {
             if (key === "paper_finish") {
               return (
                 <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
-                  <option value="">Select {key}</option>
+                  <option value="">Select paper finish</option>
                   {paperFinishOptions.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
