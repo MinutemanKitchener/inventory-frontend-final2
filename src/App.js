@@ -18,6 +18,17 @@ function App() {
     "borrowed_from", "notes", "location"
   ];
 
+  const productTypeOptions = [
+    "Text", "Cover", "Label Stock", "Synthetic", "Envelopes", "Tags",
+    "Roll Label Stock", "Wide Format Adhesive Back Vinyl", "Foamcore",
+    "Coroplast", "PVC", "Alu Panel", "Laminate"
+  ];
+
+  const paperFinishOptions = [
+    "Uncoated", "Semi Gloss", "Gloss", "High Gloss",
+    "Silk", "Matte", "Lustre"
+  ];
+
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -37,12 +48,136 @@ function App() {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const cleanedData = { ...formData };
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === '') delete cleanedData[key];
+      });
+
+      const res = await fetch(`${API_BASE}/inventory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cleanedData),
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        setFormData({ location: activeTab });
+        fetchInventory();
+      } else {
+        setError(result.error || "Submission failed: " + JSON.stringify(result));
+      }
+    } catch (err) {
+      setError("Error: " + err.message);
+    }
+  };
+
+  const filteredInventory = inventory.filter(item => item.location === activeTab);
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>MINUTEMAN PRESS KITCHENER / CAMBRIDGE</h1>
         <p>Inventory Management System</p>
       </header>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        {["Kitchener", "Cambridge"].map(loc => (
+          <button
+            key={loc}
+            onClick={() => {
+              setActiveTab(loc);
+              setFormData(prev => ({ ...prev, location: loc }));
+            }}
+            style={{
+              padding: '10px 20px',
+              margin: '0 10px',
+              fontWeight: activeTab === loc ? 'bold' : 'normal',
+              background: activeTab === loc ? '#007bff' : '#ccc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px'
+            }}
+          >
+            {loc}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+        <h2>Add Inventory Item</h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '10px',
+          marginBottom: '10px'
+        }}>
+          {columns.map((key) => {
+            const label = <label key={key}><strong>{key}</strong></label>;
+
+            if (key === "product_type") {
+              return (
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="">Select</option>
+                    {productTypeOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+            if (key === "paper_finish") {
+              return (
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="">Select</option>
+                    {paperFinishOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+            if (key === "location") {
+              return (
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="Kitchener">Kitchener</option>
+                    <option value="Cambridge">Cambridge</option>
+                  </select>
+                </div>
+              );
+            }
+            if (key === "date_of_purchase") {
+              return (
+                <div key={key}>
+                  {label}
+                  <input type="date" name={key} value={formData[key] || ""} onChange={handleChange} />
+                </div>
+              );
+            }
+            return (
+              <div key={key}>
+                {label}
+                <input name={key} placeholder={key} value={formData[key] || ""} onChange={handleChange} />
+              </div>
+            );
+          })}
+        </div>
+        <button type="submit" style={{ marginTop: '10px' }}>Add Item</button>
+      </form>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {loading && <p>Loading inventory...</p>}
@@ -56,8 +191,8 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {inventory.length > 0 ? (
-            inventory.map((item, index) => (
+          {filteredInventory.length > 0 ? (
+            filteredInventory.map((item, index) => (
               <tr key={index}>
                 {columns.map((col, i) => (
                   <td key={i}>{item[col] || ""}</td>
@@ -67,7 +202,7 @@ function App() {
           ) : (
             <tr>
               <td colSpan={columns.length} style={{ textAlign: 'center' }}>
-                No inventory records found.
+                No inventory records found for {activeTab}.
               </td>
             </tr>
           )}
