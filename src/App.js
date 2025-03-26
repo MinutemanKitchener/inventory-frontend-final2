@@ -6,6 +6,7 @@ function App() {
   const [formData, setFormData] = useState({ location: 'Kitchener' });
   const [activeTab, setActiveTab] = useState('Kitchener');
   const [error, setError] = useState('');
+  const [debugMessage, setDebugMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_BASE = "https://inventory-system-3.onrender.com";
@@ -18,17 +19,6 @@ function App() {
     "borrowed_from", "notes", "location"
   ];
 
-  const productTypeOptions = [
-    "Text", "Cover", "Label Stock", "Synthetic", "Envelopes", "Tags",
-    "Roll Label Stock", "Wide Format Adhesive Back Vinyl", "Foamcore",
-    "Coroplast", "PVC", "Alu Panel", "Laminate"
-  ];
-
-  const paperFinishOptions = [
-    "Uncoated", "Semi Gloss", "Gloss", "High Gloss",
-    "Silk", "Matte", "Lustre"
-  ];
-
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -36,11 +26,11 @@ function App() {
   const fetchInventory = async () => {
     setLoading(true);
     setError('');
+    setDebugMessage('');
     try {
       const res = await fetch(`${API_BASE}/inventory`);
       const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("Invalid inventory format");
-      setInventory(data);
+      setInventory(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Load failed: " + err.message);
     } finally {
@@ -56,6 +46,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setDebugMessage('');
     try {
       const cleanedData = { ...formData };
       Object.keys(cleanedData).forEach(key => {
@@ -70,10 +61,11 @@ function App() {
 
       const result = await res.json();
       if (res.ok) {
+        setDebugMessage("Submitted successfully: " + JSON.stringify(result));
         setFormData({ location: activeTab });
         fetchInventory();
       } else {
-        setError(result.error || "Submission failed: " + JSON.stringify(result));
+        setError("Submission failed: " + JSON.stringify(result));
       }
     } catch (err) {
       setError("Error: " + err.message);
@@ -120,66 +112,24 @@ function App() {
           gap: '10px',
           marginBottom: '10px'
         }}>
-          {columns.map((key) => {
-            const label = <label key={key}><strong>{key}</strong></label>;
-
-            if (key === "product_type") {
-              return (
-                <div key={key}>
-                  {label}
-                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
-                    <option value="">Select</option>
-                    {productTypeOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            }
-            if (key === "paper_finish") {
-              return (
-                <div key={key}>
-                  {label}
-                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
-                    <option value="">Select</option>
-                    {paperFinishOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            }
-            if (key === "location") {
-              return (
-                <div key={key}>
-                  {label}
-                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
-                    <option value="Kitchener">Kitchener</option>
-                    <option value="Cambridge">Cambridge</option>
-                  </select>
-                </div>
-              );
-            }
-            if (key === "date_of_purchase") {
-              return (
-                <div key={key}>
-                  {label}
-                  <input type="date" name={key} value={formData[key] || ""} onChange={handleChange} />
-                </div>
-              );
-            }
-            return (
-              <div key={key}>
-                {label}
-                <input name={key} placeholder={key} value={formData[key] || ""} onChange={handleChange} />
-              </div>
-            );
-          })}
+          {columns.map((key) => (
+            <div key={key}>
+              <label><strong>{key}</strong></label>
+              <input
+                type={key === "date_of_purchase" ? "date" : "text"}
+                name={key}
+                value={formData[key] || ""}
+                onChange={handleChange}
+                placeholder={key}
+              />
+            </div>
+          ))}
         </div>
         <button type="submit" style={{ marginTop: '10px' }}>Add Item</button>
       </form>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {debugMessage && <p style={{ color: 'blue' }}>{debugMessage}</p>}
       {loading && <p>Loading inventory...</p>}
 
       <table>
