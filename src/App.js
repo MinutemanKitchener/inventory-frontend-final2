@@ -3,12 +3,9 @@ import './App.css';
 
 function App() {
   const [inventory, setInventory] = useState([]);
-  const [itemForm, setItemForm] = useState({ item: '', quantity: '', reserved: '' });
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const location = "Kitchener";
-  const user = "kitchener@example.com";
+  const [rawData, setRawData] = useState('');
 
   const API_BASE = "https://inventory-system-2-rhm0.onrender.com";
 
@@ -22,8 +19,9 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/inventory`);
       const text = await res.text();
+      setRawData(text);
       const data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error("Invalid inventory format");
+      if (!Array.isArray(data)) throw new Error("Expected array of inventory items.");
       setInventory(data);
     } catch (err) {
       setError("Load failed: " + err.message);
@@ -32,80 +30,66 @@ function App() {
     }
   };
 
-  const handleAddItem = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const res = await fetch(`${API_BASE}/inventory`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          item: itemForm.item,
-          quantity: Number(itemForm.quantity),
-          reserved: Number(itemForm.reserved || 0)
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Add failed");
-      setMessage("Item added");
-      setItemForm({ item: '', quantity: '', reserved: '' });
-      fetchInventory();
-    } catch (err) {
-      setError("Add item failed: " + err.message);
-    }
-  };
+  const fieldOrder = [
+    "id",
+    "date_of_purchase",
+    "vendor",
+    "vendor_invoice",
+    "price_per_m",
+    "product_type",
+    "brand",
+    "paper_finish",
+    "paper_weight",
+    "colour",
+    "size",
+    "quantity_on_hand",
+    "reserved_customer",
+    "reserved_job",
+    "quantity_available",
+    "loaned_to",
+    "borrowed_from",
+    "notes"
+  ];
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>MINUTEMAN PRESS KITCHENER / CAMBRIDGE</h1>
-        <p>Inventory Management System</p>
+        <p>Inventory Management System (All Fields)</p>
       </header>
 
-      <nav className="navbar">
-        <p>Viewing as: {user} ({location})</p>
-      </nav>
-
-      {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {loading && <p>Loading inventory...</p>}
 
-      <section className="add-inventory">
-        <h2>Add New Item</h2>
-        <form onSubmit={handleAddItem}>
-          <input type="text" placeholder="Item" value={itemForm.item} onChange={(e) => setItemForm({ ...itemForm, item: e.target.value })} required />
-          <input type="number" placeholder="Quantity" value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} required />
-          <input type="number" placeholder="Reserved" value={itemForm.reserved} onChange={(e) => setItemForm({ ...itemForm, reserved: e.target.value })} />
-          <button type="submit">Add Item</button>
-        </form>
-      </section>
-
-      <section className="inventory-list">
-        <h2>Inventory</h2>
-        {loading ? (
-          <p>Loading inventory...</p>
-        ) : (
+      {!error && inventory.length > 0 ? (
+        <section className="inventory-list">
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Reserved</th>
+                {fieldOrder.map((field) => (
+                  <th key={field}>{field.replace(/_/g, ' ')}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {inventory.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
-                  <td>{item.item}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.reserved}</td>
+              {inventory.map((item, index) => (
+                <tr key={index}>
+                  {fieldOrder.map((field) => (
+                    <td key={field}>{item[field] ?? ''}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </section>
+        </section>
+      ) : null}
+
+      {error && rawData && (
+        <section className="raw-output">
+          <h3>Raw Inventory Data:</h3>
+          <pre>{rawData}</pre>
+        </section>
+      )}
     </div>
   );
 }
