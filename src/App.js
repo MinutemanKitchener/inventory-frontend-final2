@@ -8,6 +8,15 @@ function App() {
 
   const API_BASE = "https://inventory-system-3.onrender.com";
 
+  // Define static column headers
+  const columns = [
+    "date_of_purchase", "vendor", "vendor_invoice", "price_per_m",
+    "product_type", "brand", "paper_finish", "paper_weight",
+    "colour", "size", "quantity_on_hand", "reserved_customer",
+    "reserved_job", "quantity_available", "loaned_to",
+    "borrowed_from", "notes"
+  ];
+
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -37,26 +46,32 @@ function App() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {loading && <p>Loading inventory...</p>}
 
-      {inventory.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              {Object.keys(inventory[0]).map((key) => (
-                <th key={key}>{key}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {inventory.map((item, index) => (
+      <table>
+        <thead>
+          <tr>
+            {columns.map((key) => (
+              <th key={key}>{key}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {inventory.length > 0 ? (
+            inventory.map((item, index) => (
               <tr key={index}>
-                {Object.values(item).map((val, i) => (
-                  <td key={i}>{val}</td>
+                {columns.map((col, i) => (
+                  <td key={i}>{item[col] || ""}</td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length} style={{ textAlign: 'center' }}>
+                No inventory records found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
