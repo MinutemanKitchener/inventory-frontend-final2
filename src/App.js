@@ -36,7 +36,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(\`\${API_BASE}/inventory\`);
+      const res = await fetch(`${API_BASE}/inventory`);
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid inventory format");
       setInventory(data);
@@ -56,7 +56,7 @@ function App() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch(\`\${API_BASE}/inventory\`, {
+      const res = await fetch(`${API_BASE}/inventory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
