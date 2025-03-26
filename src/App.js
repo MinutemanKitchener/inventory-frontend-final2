@@ -57,17 +57,23 @@ function App() {
     e.preventDefault();
     setError('');
     try {
+      const cleanedData = { ...formData };
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === '') delete cleanedData[key];
+      });
+
       const res = await fetch(`${API_BASE}/inventory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(cleanedData),
       });
+
       const result = await res.json();
       if (res.ok) {
         setFormData({ location: activeTab });
         fetchInventory();
       } else {
-        setError(result.error || "Submission failed.");
+        setError(result.error || "Submission failed: " + JSON.stringify(result));
       }
     } catch (err) {
       setError("Error: " + err.message);
@@ -115,54 +121,58 @@ function App() {
           marginBottom: '10px'
         }}>
           {columns.map((key) => {
+            const label = <label key={key}><strong>{key}</strong></label>;
+
             if (key === "product_type") {
               return (
-                <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
-                  <option value="">Select product type</option>
-                  {productTypeOptions.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="">Select</option>
+                    {productTypeOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
               );
             }
             if (key === "paper_finish") {
               return (
-                <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
-                  <option value="">Select paper finish</option>
-                  {paperFinishOptions.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="">Select</option>
+                    {paperFinishOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
               );
             }
             if (key === "location") {
               return (
-                <select key={key} name={key} value={formData[key] || ""} onChange={handleChange}>
-                  <option value="">Select location</option>
-                  <option value="Kitchener">Kitchener</option>
-                  <option value="Cambridge">Cambridge</option>
-                </select>
+                <div key={key}>
+                  {label}
+                  <select name={key} value={formData[key] || ""} onChange={handleChange}>
+                    <option value="Kitchener">Kitchener</option>
+                    <option value="Cambridge">Cambridge</option>
+                  </select>
+                </div>
               );
             }
             if (key === "date_of_purchase") {
               return (
-                <input
-                  key={key}
-                  type="date"
-                  name={key}
-                  value={formData[key] || ""}
-                  onChange={handleChange}
-                />
+                <div key={key}>
+                  {label}
+                  <input type="date" name={key} value={formData[key] || ""} onChange={handleChange} />
+                </div>
               );
             }
             return (
-              <input
-                key={key}
-                name={key}
-                placeholder={key}
-                value={formData[key] || ""}
-                onChange={handleChange}
-              />
+              <div key={key}>
+                {label}
+                <input name={key} placeholder={key} value={formData[key] || ""} onChange={handleChange} />
+              </div>
             );
           })}
         </div>
